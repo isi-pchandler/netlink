@@ -84,12 +84,7 @@ func (h *Handle) bridgeMsg(
 		flags,
 	)
 
-	// add the extension attributes that let us interact with the bridge vlan
-	// subsystem
-	//vlan_xt := attributeBuffer(4, nl.IFLA_EXT_MASK, uint32(RTEXT_FILTER_BRVLAN))
-
 	req.AddData(ifi)
-	//req.AddRawData(vlan_xt)
 
 	return req
 }
@@ -152,7 +147,6 @@ func (h *Handle) bridgeVlanModlink(
 
 	//call down into netlink
 	soctype := int(syscall.NETLINK_ROUTE)
-	//restype := uint16(syscall.RTM_NEWLINK)
 	restype := uint16(0)
 	log.Printf("sending netlink message")
 	_, err := req.Execute(soctype, restype)
