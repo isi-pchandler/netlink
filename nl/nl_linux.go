@@ -374,6 +374,7 @@ func (req *NetlinkRequest) Execute(sockType int, resType uint16) ([][]byte, erro
 		s   *NetlinkSocket
 		err error
 	)
+	fmt.Printf("plopgoblin")
 
 	if req.Sockets != nil {
 		if sh, ok := req.Sockets[sockType]; ok {
@@ -407,6 +408,7 @@ func (req *NetlinkRequest) Execute(sockType int, resType uint16) ([][]byte, erro
 
 done:
 	for {
+		fmt.Printf("turbomuffin")
 		msgs, err := s.Receive()
 		if err != nil {
 			return nil, err
