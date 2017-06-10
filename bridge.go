@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"github.com/vishvananda/netlink/nl"
-	"log"
 	"syscall"
 )
 
@@ -28,6 +27,7 @@ const (
 	BRIDGE_VLAN_INFO_RANGE_BEGIN = 0x8
 	BRIDGE_VLAN_INFO_RANGE_END   = 0x10
 	BRIDGE_VLAN_INFO_BRENTRY     = 0x20
+	BRIDGE_VLAN_INFO_EGRESS      = 0x40
 )
 
 // bridge flags
@@ -40,14 +40,18 @@ const (
 	RTEXT_FILTER_BRVLAN = 2
 )
 
-type BridgeVlanInfo struct {
+type VidInfo struct {
 	Flags uint16
 	Vid   uint16
 }
 
-type BridgeInfo struct {
+type BridgeVlanInfo struct {
 	Index int
 	Vlans []*VlanInfo
+}
+
+type BridgeLinkInfo struct {
+	Index int
 }
 
 type VlanInfo struct {
@@ -55,8 +59,12 @@ type VlanInfo struct {
 	Master, Pvid, Untagged, RangeBegin, RangeEnd, Brentry bool
 }
 
-func GetBridgeInfo() ([]*BridgeInfo, error) {
-	return pkgHandle.GetBridgeInfo()
+func GetBridgeVlanInfo() ([]*BridgeVlanInfo, error) {
+	return pkgHandle.GetBridgeVlanInfo()
+}
+
+func GetBridgeLinkInfo() ([]*BridgeLinkInfo, error) {
+	return pkgHandle.GetBridgeLinkInfo()
 }
 
 func attributeBuffer(data_len, kind int, data interface{}) []byte {
@@ -108,7 +116,7 @@ func BridgeVlanDel(
 func (h *Handle) bridgeVlanModlink(
 	cmd, vid uint, dev_index int, bridge_flags, vinfo_flags uint) error {
 
-	vinfo := &BridgeVlanInfo{
+	vinfo := &VidInfo{
 		Vid:   uint16(vid),
 		Flags: uint16(vinfo_flags),
 	}
@@ -148,19 +156,19 @@ func (h *Handle) bridgeVlanModlink(
 	//call down into netlink
 	soctype := int(syscall.NETLINK_ROUTE)
 	restype := uint16(0)
-	log.Printf("sending netlink message")
+	//log.Printf("sending netlink message")
 	_, err := req.Execute(soctype, restype)
 	if err != nil {
 		return err
 	} else {
-		log.Printf("netlink message sent")
+		//log.Printf("netlink message sent")
 	}
 
 	return nil
 
 }
 
-func (h *Handle) GetBridgeInfo() ([]*BridgeInfo, error) {
+func (h *Handle) GetBridgeVlanInfo() ([]*BridgeVlanInfo, error) {
 
 	//craft our netlink request to get all the vlan info from all the bridges
 	req := h.bridgeMsg(
@@ -178,9 +186,9 @@ func (h *Handle) GetBridgeInfo() ([]*BridgeInfo, error) {
 	}
 
 	//build the result from the netlink response
-	var result []*BridgeInfo
+	var result []*BridgeVlanInfo
 	for _, m := range msgs {
-		b, err := BridgeDeserialize(nil, m)
+		b, err := BridgeVlanDeserialize(nil, m)
 		if err != nil {
 			return nil, err
 		}
@@ -190,7 +198,32 @@ func (h *Handle) GetBridgeInfo() ([]*BridgeInfo, error) {
 	return result, nil
 }
 
-func BridgeDeserialize(hdr *syscall.NlMsghdr, m []byte) (*BridgeInfo, error) {
+func (h *Handle) GetBridgeLinkInfo() ([]*BridgeLinkInfo, error) {
+	req := h.bridgeMsg(
+		syscall.RTM_GETLINK,
+		syscall.NLM_F_DUMP|syscall.NLM_F_REQUEST,
+		nl.NewIfInfomsg(syscall.AF_BRIDGE),
+	)
+	//call down into netlink
+	msgs, err := req.Execute(syscall.NETLINK_ROUTE, syscall.RTM_NEWLINK)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*BridgeLinkInfo
+	for _, m := range msgs {
+		b, err := BridgeLinkDeserialize(nil, m)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, b)
+	}
+
+	return result, nil
+}
+
+func BridgeVlanDeserialize(hdr *syscall.NlMsghdr, m []byte) (
+	*BridgeVlanInfo, error) {
 
 	msg := nl.DeserializeIfInfomsg(m)
 	attrs, err := nl.ParseRouteAttr(m[msg.Len():])
@@ -201,7 +234,7 @@ func BridgeDeserialize(hdr *syscall.NlMsghdr, m []byte) (*BridgeInfo, error) {
 		return nil, nil
 	}
 
-	bi := &BridgeInfo{Index: int(msg.Index)}
+	bi := &BridgeVlanInfo{Index: int(msg.Index)}
 
 	for _, attr := range attrs {
 		switch attr.Attr.Type {
@@ -231,4 +264,16 @@ func BridgeDeserialize(hdr *syscall.NlMsghdr, m []byte) (*BridgeInfo, error) {
 		}
 	}
 	return bi, nil
+}
+
+func BridgeLinkDeserialize(hdr *syscall.NlMsghdr, m []byte) (
+	*BridgeLinkInfo, error) {
+
+	msg := nl.DeserializeIfInfomsg(m)
+	if msg.Family != syscall.AF_BRIDGE {
+		return nil, nil
+	}
+
+	return &BridgeLinkInfo{Index: int(msg.Index)}, nil
+
 }
