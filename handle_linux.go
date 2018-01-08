@@ -7,6 +7,8 @@ import (
 
 	"github.com/vishvananda/netlink/nl"
 	"github.com/vishvananda/netns"
+
+	"golang.org/x/sys/unix"
 )
 
 // Empty handle used by the netlink package methods
@@ -101,7 +103,7 @@ func (h *Handle) newNetlinkRequest(proto, flags int) *nl.NetlinkRequest {
 		return nl.NewNetlinkRequest(proto, flags)
 	}
 	return &nl.NetlinkRequest{
-		NlMsghdr: syscall.NlMsghdr{
+		NlMsghdr: unix.NlMsghdr{
 			Len:   uint32(syscall.SizeofNlMsghdr),
 			Type:  uint16(proto),
 			Flags: syscall.NLM_F_REQUEST | uint16(flags),

@@ -8,6 +8,8 @@ import (
 
 	"github.com/vishvananda/netlink/nl"
 	"github.com/vishvananda/netns"
+
+	"golang.org/x/sys/unix"
 )
 
 // RtAttr is shared so it is in netlink_linux.go
@@ -254,7 +256,7 @@ func (h *Handle) routeHandle(route *Route, req *nl.NetlinkRequest, msg *nl.RtMsg
 		buf := []byte{}
 		for _, nh := range route.MultiPath {
 			rtnh := &nl.RtNexthop{
-				RtNexthop: syscall.RtNexthop{
+				RtNexthop: unix.RtNexthop{
 					Hops:    uint8(nh.Hops),
 					Ifindex: int32(nh.LinkIndex),
 					Flags:   uint8(nh.Flags),
