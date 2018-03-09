@@ -26,12 +26,15 @@
 
 
 [[constraint]]
-  branch = "master"
+  #branch = "master"
+  revision = "1882fa99fc5adc217f354c6f37a172876877f77d"
   name = "github.com/vishvananda/netlink"
 
-[[constraint]]
-  branch = "master"
-  name = "github.com/vishvananda/netns"
+#[[constraint]]
+  #branch = "master"
+  #revision = "2632e243fb1a61b67ad23b04c16a5a48315e9391"
+  #revision = "1e045880fbc2f6703d3c771db56cfb0351208637"
+  #name = "github.com/vishvananda/netns"
 
 [[constraint]]
   branch = "master"

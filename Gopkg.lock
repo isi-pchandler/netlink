@@ -2,10 +2,9 @@
 
 
 [[projects]]
-  branch = "master"
   name = "github.com/vishvananda/netlink"
   packages = ["nl"]
-  revision = "5236321576c0c97ab02c078e60f9b1c5c1828807"
+  revision = "1882fa99fc5adc217f354c6f37a172876877f77d"
 
 [[projects]]
   branch = "master"
@@ -22,6 +21,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0859a7685759623c2177575a5df0c625b97b0fb70d61f74ead071f49ecc0e7a8"
+  inputs-digest = "1de02e8248156e878a2e4b62874a7ebfab58cdec052769ddaa50dd141545954a"
   solver-name = "gps-cdcl"
   solver-version = 1
